@@ -20,7 +20,7 @@ jobs:
 
           mkdir -p build-project
 
-          ZIP_FILE=$(find . -maxdepth 1 -type f -name 'SameerNutrition_Complete_Premium_App.zip' -print -quit)
+          ZIP_FILE=$(find . -maxdepth 1 -type f -name 'SAMEER_NUTRITION_FINAL_ALL_IN_ONE_V8.zip' -print -quit)
 
           if [ -z "$ZIP_FILE" ]; then
             echo "Project ZIP not found"
