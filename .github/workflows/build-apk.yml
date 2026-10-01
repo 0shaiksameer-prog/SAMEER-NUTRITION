@@ -1,1 +1,72 @@
 
+name: Build SAMEER NUTRITION APK
+
+on:
+  workflow_dispatch:
+  push:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Find and extract project
+        shell: bash
+        run: |
+          set -e
+
+          mkdir -p build-project
+
+          ZIP_FILE=$(find . -maxdepth 1 -type f -name 'SameerNutrition_Complete_Premium_App.zip' -print -quit)
+
+          if [ -z "$ZIP_FILE" ]; then
+            echo "Project ZIP not found"
+            exit 1
+          fi
+
+          echo "Using: $ZIP_FILE"
+          unzip -q "$ZIP_FILE" -d build-project
+
+          PROJECT_DIR=$(find build-project -name settings.gradle -o -name settings.gradle.kts | head -n 1)
+
+          if [ -z "$PROJECT_DIR" ]; then
+            echo "Gradle project not found"
+            find build-project -maxdepth 4 -type f | head -100
+            exit 1
+          fi
+
+          PROJECT_DIR=$(dirname "$PROJECT_DIR")
+          echo "PROJECT_DIR=$PROJECT_DIR" >> "$GITHUB_ENV"
+
+          echo "Project directory: $PROJECT_DIR"
+
+      - name: Enable AndroidX
+        shell: bash
+        run: |
+          echo "android.useAndroidX=true" >> "$PROJECT_DIR/gradle.properties"
+          echo "android.enableJetifier=true" >> "$PROJECT_DIR/gradle.properties"
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.7'
+
+      - name: Build APK
+        run: |
+          gradle -p "$PROJECT_DIR" assembleDebug --stacktrace
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: SAMEER-NUTRITION-APK
+          path: |
+            ${{ env.PROJECT_DIR }}/app/build/outputs/apk/debug/*.apk
